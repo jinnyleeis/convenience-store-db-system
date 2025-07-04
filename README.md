@@ -31,8 +31,7 @@
 - 모든 상품(Product)은 product_upc라는 바코드를 통해 식별될 수 있도록 하고, 각 상품에 대한 공급자는 1차 Vendor(주 공급사)와 매핑된다고 가정하였다. 
 - 특정 점포별 지표뿐만 아니라, 전국 매장에서 합산·분석해야 할 지표(예: 영수증 수, 환불 추적)가 많으므로, Sale 테이블(특정 판매 내역(영수증 정보)에 해당)의 sale_id를 특정 점포에 한정한 고유한 id가 아니라, 전역 유일 ID라고 가정하였다.
 - store ownership : 점포(Store)는 24시간 운영 여부와 소유 형태(프랜차이즈/직영)를 속성으로 보유할 수 있도록 하였다. 
-- brand-to- product relationships : 브랜드‑제품 관계는 Product 엔터티의 brand 속성으로 관리되어 product 엔티티에서 해당하는 브랜드를 바로 확인할 수 있도록 하였다.
--  (훗날 물리적 스키마로 변경시, 별도 join 과정이 없어도 브랜드별 제품의 판매 실적 분석이 가능하도록)
+- brand-to- product relationships : 브랜드‑제품 관계는 Product 엔터티의 brand 속성으로 관리되어 product 엔티티에서 해당하는 브랜드를 바로 확인할 수 있도록 하였다. (훗날 물리적 스키마로 변경시, 별도 join 과정이 없어도 브랜드별 제품의 판매 실적 분석이 가능하도록)
 - 고객을 식별하지 못하는(customer 테이블에 존재하지 않는 엔티티) 비회원 판매도 허용할 수 있도록 하였다.
 - 새로 오픈한 편의점은 아직 보유한 product가 없을 수도 있음을 가정했고, 새로 편의점과 계약을 맺어, 아직은 공급하는 product가 없는 vendor가 존재할 수 있음을 가정하였다. 
 
@@ -156,17 +155,17 @@ BCNF는 “모든 비자명 FD의 좌변이 슈퍼키”일 때 성립한다.
 - 다른 FD는 존재하지 않고, 좌변이 기본키이므로 슈퍼키에 해당한다. 
 
 
-9. **sale_customer** (`sale_id, customer_id`)  
+8. **sale_customer** (`sale_id, customer_id`)  
 - PK → sale_id (1:0-1 관계), FD → sale_id → customer_id
 - customer_id -> sale_id는, 하나의 고객은 여러개의 영수증을 지닐 수 있으므로, 성립하지 않는 fd이다.
 - 좌변이 PK라서 슈퍼키 조건을 충족하게 된다. 
 
-10. **stock** (`product_upc, store_id, inventory_level, reorder_threshold, reorder_quantity`)  
+9. **stock** (`product_upc, store_id, inventory_level, reorder_threshold, reorder_quantity`)  
 - PK → (product_upc, store_id)
 - FD → (product_upc, store_id) → inventory_level, reorder_threshold, reorder_quantity
 - 다른 FD는 존재하지 않고, 좌변이 기본키이므로 슈퍼키에 해당한다. 
 
-11. **order_list** (`order_id, product_upc, store_id, order_datetime, order_quantity`)
+10. **order_list** (`order_id, product_upc, store_id, order_datetime, order_quantity`)
 - 스키마 → order_list(order_id, product_upc, store_id, order_datetime, order_quantity)
 - PK → (order_id, product_upc, store_id)
 - 상품의 주문은, 각각의 상품이 재입고할 시점이 되면, 주문이 이루어지는 것이므로, 각 점포의 각 상품별로, 주문 시각은 상이하다.
@@ -319,9 +318,12 @@ vendor_id와,  customer_id등의 수보다, 제품의 바코드 수나,  각 점
 * **Sale Line Items**: 120건
 * **Order List**: 3건
 
-샘플 데이터는 현실성을 최우선으로,  “카테고리적인 다양성과, 시계열 분포와, 용량 테스트가 가능하도록 여러 데이터를 포함시켰다. 공급사는 식품사와 음료사를 합쳐 14개를 만들었고, 상품은 과자·라면·생활용품·커피 등 41종으로 확장했다. 10개 점포는 FRANCHISE 6 : CORPORATE 4의 구조로 배치해 7번째의 쿼리(소유형태를 비교하는 쿼리에 해당)이 의미 있는 결과를 반환하도록 하였다.
-판매 데이터는 60건 정도로 삽입하였고, 최근 20일간 고르게 분포시켜 월간·분기별 집계를 담당하는 쿼리가 집계 오류 없이 잘 동작함을 확인할 수 있었다. 또한,  각 영수증에 1~3개 품목을 섞어 sale_line_item을 120건 정도로 생성하였다. 재고 테이블에 해당하는 stock에는 “상품 41 × 점포 10”를, 기본으로 생성하되, 일부 상품·점포 조합을 의도적으로 누락시켜 ‘미입점’의 시나리오도 가능하게 해, 7번째의 쿼리(소유형태를 비교하는 쿼리에 해당)이 의미 있는 결과를 반환하도록 하였다.
-마지막으로 order_list에 발주 이력 3건을 추가하였다.
+- 샘플 데이터는 현실성을 최우선으로,  “카테고리적인 다양성과, 시계열 분포와, 용량 테스트가 가능하도록 여러 데이터를 포함시켰다. 공급사는 식품사와 음료사를 합쳐 14개를 만들었고, 상품은 과자·라면·생활용품·커피 등 41종으로 확장했다.
+- 10개 점포는 FRANCHISE 6 : CORPORATE 4의 구조로 배치해 7번째의 쿼리(소유형태를 비교하는 쿼리에 해당)이 의미 있는 결과를 반환하도록 하였다.
+- 판매 데이터는 60건 정도로 삽입하였고, 최근 20일간 고르게 분포시켜 월간·분기별 집계를 담당하는 쿼리가 집계 오류 없이 잘 동작함을 확인할 수 있었다.
+- 또한,  각 영수증에 1~3개 품목을 섞어 sale_line_item을 120건 정도로 생성하였다.
+- 재고 테이블에 해당하는 stock에는 “상품 41 × 점포 10”를, 기본으로 생성하되, 일부 상품·점포 조합을 의도적으로 누락시켜 ‘미입점’의 시나리오도 가능하게 해, 7번째의 쿼리(소유형태를 비교하는 쿼리에 해당)이 의미 있는 결과를 반환하도록 하였다.
+- 마지막으로 order_list에 발주 이력 3건을 추가하였다.
 
 
 ---
@@ -420,8 +422,8 @@ vendor_id와,  customer_id등의 수보다, 제품의 바코드 수나,  각 점
 
 
   
-3. **Top-Selling Items (Last Month)**
-4. 
+2. **Top-Selling Items (Last Month)**
+
 <img width="975" alt="image" src="https://github.com/user-attachments/assets/3295af24-f5e1-4239-8205-defd03bdecb0" />
 
    * `WITH product_sales AS ( … SUM(quantity × price) … )`
@@ -434,7 +436,7 @@ vendor_id와,  customer_id등의 수보다, 제품의 바코드 수나,  각 점
    - 내부 쿼리가 아닌, 외부 쿼리는 WHERE r=1 필터로 순위 1행만 남기기 떄문에, 점포당 정확히 한 행만 출력된다. 매출 계산 과정에 가격 컬럼이 포함되어 있기 때문에, 수량 기준이 아닌 금액 기준 랭킹을 제공할 수 있다.
    - 또한, 중간에 CAST 함수도 사용해, 타입 명시/변환이 가능할 수 있도록 하였다.
 
-5. **Store Performance (This Quarter)**
+3. **Store Performance (This Quarter)**
 
 <img width="985" alt="image" src="https://github.com/user-attachments/assets/ff765946-4aef-4a29-8478-a10089f009ef" />
 
@@ -447,7 +449,7 @@ vendor_id와,  customer_id등의 수보다, 제품의 바코드 수나,  각 점
      - 분기를 지정하는 기간 필터에 대해 설명해보자면,  QUARTER(s.date_time)=QUARTER(CURDATE()) AND YEAR(s.date_time)=YEAR(CURDATE()) 조건으로 구현하였다.
      - 최종 결과에는 점포 ID·점포명·매출액 세 필드가 출력될 수 있도록 했다.
        
-7. **Vendor Statistics**
+4. **Vendor Statistics**
    
 <img width="985" alt="image" src="https://github.com/user-attachments/assets/f7f6310a-44fe-483b-b802-9597130b7bf7" />
    * `LEFT JOIN product` + `LEFT JOIN sale_line_item`
@@ -460,7 +462,7 @@ vendor_id와,  customer_id등의 수보다, 제품의 바코드 수나,  각 점
    - 정렬은 ORDER BY product_types DESC로 취급하는 개별 상품 관리 단위(COUNT(DISTINCT p.product_upc))가 많은 순을 우선하여 자사 거래 비중을 조정할 때 ‘대형 공급사’를 곧바로 식별할 수 있게 하였다.
    - 판매량이 적더라도 개별 상품 관리 단위가 많은 공급사가 상위에 위치할 수 있도록 했다.
 
-9. **Inventory Alert**
+5. **Inventory Alert**
 <img width="976" alt="image" src="https://github.com/user-attachments/assets/0f2f95e0-9e56-4852-99f9-00abbf276cd3" />
 
    * `WHERE inventory_level < reorder_threshold`
@@ -468,7 +470,7 @@ vendor_id와,  customer_id등의 수보다, 제품의 바코드 수나,  각 점
   - stock을 중심으로 store·product를 조인하고, WHERE inventory_level < reorder_threshold 조건으로, 부족 재고를 판별했다.
   - 출력 colum은 점포 ID·이름, 상품명, 현재 재고량, 임계치 다섯 개로 구성했다. 정렬은 stock 순으로 진행하였다. 
 
-10. **Customer Patterns (Premium + Coffee Bundles)**
+6. **Customer Patterns (Premium + Coffee Bundles)**
 <img width="980" alt="image" src="https://github.com/user-attachments/assets/99f6b1eb-ccb4-4c43-b4b5-beab955b6e74" />
 
    * `WITH coffee_sales AS (… VIP customers + coffee receipts …)`
@@ -480,7 +482,7 @@ vendor_id와,  customer_id등의 수보다, 제품의 바코드 수나,  각 점
    - 그리고, SUM(quantity)로 총 판매 수량을 집계하고 ORDER BY cnt DESC LIMIT 3으로 상위 세 품목만 남긴다.
    - 문자열 패턴은 사용자의 입력을 받아, '%' || keyword || '%' 형태로 생성할 수 있도록 하였다.
 
-11. **Franchise vs Corporate Variety**
+7. **Franchise vs Corporate Variety**
     
 <img width="412" alt="image" src="https://github.com/user-attachments/assets/641772f6-464c-421e-b4e2-475330db3881" />
 
@@ -526,16 +528,16 @@ vendor_id와,  customer_id등의 수보다, 제품의 바코드 수나,  각 점
 | TC-4      | 마지막 품목 UPDATE to 0             | `수량 0 불가`                           | ✔ 오류 발생       |
 | TC-5–7    | 7개 쿼리 결과 스크린샷 비교 (예: 분기 최고 매출) | 실제 데이터와 일치                          | ✔ 모두 일치       |
 
-테스트는 실제 더미 데이터를 기반으로 데이터베이스가 설계한 제약과 트리거를 올바르게 적용하고, 알맞은 7개의 쿼리 결과를 내놓는지에, 초점을 맞추었다. 
-먼저, 더미 데이터 INSERT 구문을 통해 14개의 공급사(vendor), 41개의 상품(product), 10개의 점포(store), 15명의 고객(customer), 408건의 재고(stock), 60건의 판매 기록(sale) 및 120건의 영수증 품목(sale_line_item), 그리고 3건의 발주 이력(order_list)을 준비했다. 
-이러한 환경에서 Test case -1을 실행하여 재고가 충분한 상황(예: stock에서 inventory_level = 40인 상품)에 수량 1을 INSERT하였고, 기대대로 sk.inventory_level이 40→39로 감소되며 COMMIT이 정상 완료되는 것을 확인 할 수 있었다. 
-TC-2에서는 동일한 레코드에 quantity = 9999를 INSERT하려 했을 때, trg_stock_deduct 트리거가 “재고 부족”을 발생시킴을 확인할 수 있었다. 
+- 테스트는 실제 더미 데이터를 기반으로 데이터베이스가 설계한 제약과 트리거를 올바르게 적용하고, 알맞은 7개의 쿼리 결과를 내놓는지에, 초점을 맞추었다. 
+- 먼저, 더미 데이터 INSERT 구문을 통해 14개의 공급사(vendor), 41개의 상품(product), 10개의 점포(store), 15명의 고객(customer), 408건의 재고(stock), 60건의 판매 기록(sale) 및 120건의 영수증 품목(sale_line_item), 그리고 3건의 발주 이력(order_list)을 준비했다. 
+- 이러한 환경에서 Test case -1을 실행하여 재고가 충분한 상황(예: stock에서 inventory_level = 40인 상품)에 수량 1을 INSERT하였고, 기대대로 sk.inventory_level이 40→39로 감소되며 COMMIT이 정상 완료되는 것을 확인 할 수 있었다. 
+- TC-2에서는 동일한 레코드에 quantity = 9999를 INSERT하려 했을 때, trg_stock_deduct 트리거가 “재고 부족”을 발생시킴을 확인할 수 있었다. 
 
 <img width="595" alt="image" src="https://github.com/user-attachments/assets/3ef84272-0479-4dd7-bd67-82aa9f89dfa5" />
 
-또한, TestCase-3과 Testcase-4로는 sale_line_item의 마지막 품목을 0으로 UPDATE하거나 DELETE 시도할 때, trg_sli_last_zero와 trg_sli_last_del이 각각 “수량 0 불가” 및 “마지막 품목 삭제 불가” 오류를 반환하며 무결성을 보장함을 확인하였다. 
-그리고 이미 6.4.2 Query Implementation에서, 쿼리 테스트 케이스 실행 결과를 스크린샷 첨부하였지만, 일부만 언급하자면, q3_bestStoreThisQuarter() 쿼리를 실행하여 부산서면점(store_id = 105)이 169,050.00원의 매출을 기록하고, 이게 실제적인 매출과 일치하는 것을 확인했다.
-이 밖에도, 7개 케이스 모두, 실제 데이터와 부합하게 알맞은 결과를 내놓았다. 
+- 또한, TestCase-3과 Testcase-4로는 sale_line_item의 마지막 품목을 0으로 UPDATE하거나 DELETE 시도할 때, trg_sli_last_zero와 trg_sli_last_del이 각각 “수량 0 불가” 및 “마지막 품목 삭제 불가” 오류를 반환하며 무결성을 보장함을 확인하였다. 
+- 그리고 이미 6.4.2 Query Implementation에서, 쿼리 테스트 케이스 실행 결과를 스크린샷 첨부하였지만, 일부만 언급하자면, q3_bestStoreThisQuarter() 쿼리를 실행하여 부산서면점(store_id = 105)이 169,050.00원의 매출을 기록하고, 이게 실제적인 매출과 일치하는 것을 확인했다.
+- 이 밖에도, 7개 케이스 모두, 실제 데이터와 부합하게 알맞은 결과를 내놓았다. 
 
 <a name="652-business-rule-validation"></a>
 ### 6.5.2 Business Rule Validation
@@ -546,15 +548,11 @@ TC-2에서는 동일한 레코드에 quantity = 9999를 INSERT하려 했을 때,
 * **ENUM & CHECK**: 도메인 무결성 보장
 * **Cascade Deletes**: `order_list`, `stock` → 고아 레코드 방지
 
-비즈니스 규칙은 데이터베이스 레벨에서 자동으로 강제되도록 설계되었으며, 더미 데이터를 통해 실제로 알맞게 작동하는지 확인했다. 
-먼저, 재고 차감 로직은 trg_stock_deduct 트리거를 통해, 실시간 재고 동기화를 보장할 수 있도록 했고, 재고 기록이 없는 경우에도 “해당 점포에 재고 기록이 없습니다.”라는 메시지로 예외를 처리할 수 있도록 했다. 
-다음으로, 모든 영수증에는 최소 1개의 line item이 유지되어야 한다는 규칙이 trg_sli_last_zero와 trg_sli_last_del로 UPDATE/DELETE를 수행할 때 강제될 수 있도로 하였다. 
-외래키 제약에서는 product.vendor_id, sale.store_id, sale_customer.sale_id, order_list(product_upc, store_id) 등에 ON UPDATE CASCADE와 ON DELETE RESTRICT/CASCADE를 적절히 적용하여, 부모 레코드 변경 시 자식 레코드가 자동 갱신 또는 삭제되도록 설정했다. 
-ENUM과 CHECK 제약은 입력될 수 있는 도메인과 값의 범위를 제한할 수 있도록 하여, 실제로 존재하지 않는 카테고리나, 값의 범위가 데이터로 추가될 수 없도록 하였다. 
-또한, order_list의 ON DELETE CASCADE 설정은 상품 또는 점포 삭제 시 관련 재고·발주 기록을 자동으로 정리하여 고아 레코드 생성을 방지할 수 있도록 했다. 
+- 비즈니스 규칙은 데이터베이스 레벨에서 자동으로 강제되도록 설계되었으며, 더미 데이터를 통해 실제로 알맞게 작동하는지 확인했다. 
+- 먼저, 재고 차감 로직은 trg_stock_deduct 트리거를 통해, 실시간 재고 동기화를 보장할 수 있도록 했고, 재고 기록이 없는 경우에도 “해당 점포에 재고 기록이 없습니다.”라는 메시지로 예외를 처리할 수 있도록 했다. 
+- 다음으로, 모든 영수증에는 최소 1개의 line item이 유지되어야 한다는 규칙이 trg_sli_last_zero와 trg_sli_last_del로 UPDATE/DELETE를 수행할 때 강제될 수 있도로 하였다. 
+- 외래키 제약에서는 product.vendor_id, sale.store_id, sale_customer.sale_id, order_list(product_upc, store_id) 등에 ON UPDATE CASCADE와 ON DELETE RESTRICT/CASCADE를 적절히 적용하여, 부모 레코드 변경 시 자식 레코드가 자동 갱신 또는 삭제되도록 설정했다. 
+- ENUM과 CHECK 제약은 입력될 수 있는 도메인과 값의 범위를 제한할 수 있도록 하여, 실제로 존재하지 않는 카테고리나, 값의 범위가 데이터로 추가될 수 없도록 하였다. 
+- 또한, order_list의 ON DELETE CASCADE 설정은 상품 또는 점포 삭제 시 관련 재고·발주 기록을 자동으로 정리하여 고아 레코드 생성을 방지할 수 있도록 했다. 
 
 
----
-
-```
-```
