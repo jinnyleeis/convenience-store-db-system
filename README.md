@@ -1,20 +1,20 @@
 
 ## Table of Contents
 
-- [6.1 Logical Schema Design (25%)](#61-logical-schema-design-25)
+- [6.1 Logical Schema Design](#61-logical-schema-design-25)
   - [ER Diagram](#er-diagram)
   - [Logical Schema](#logical-schema)
   - [Transformation & Design Decisions](#transformation--design-decisions)
-- [6.2 Normalization Analysis (20%)](#62-normalization-analysis-20)
-- [6.3 Physical Implementation (15%)](#63-physical-implementation-15)
+- [6.2 Normalization Analysis](#62-normalization-analysis-20)
+- [6.3 Physical Implementation](#63-physical-implementation-15)
   - [6.3.1 Data Type Selection](#631-data-type-selection)
   - [6.3.2 Constraints & Business Rules](#632-constraints--business-rules)
   - [6.3.3 Sample Data](#633-sample-data)
-- [6.4 Application Development (30%)](#64-application-development-30)
+- [6.4 Application Development](#64-application-development-30)
   - [6.4.1 Database Connectivity](#641-database-connectivity)
   - [6.4.2 Query Implementation](#642-query-implementation)
   - [6.4.3 Error Handling & UI](#643-error-handling--ui)
-- [6.5 Testing and Validation (10%)](#65-testing-and-validation-10)
+- [6.5 Testing and Validation](#65-testing-and-validation-10)
   - [6.5.1 Test Cases & Results](#651-test-cases--results)
   - [6.5.2 Business Rule Validation](#652-business-rule-validation)
 
